@@ -36,7 +36,7 @@ impl<PROOF_LEN, RECEIPT_RLP_LENGTH> TrieProof<3, PROOF_LEN, RECEIPT_RLP_LENGTH>
         }
 
         self.verify_receipt_leaf_node(extracted_hash, key_len, key_ptr, key_nibbles);
-        
+
         true
     }
 
@@ -51,10 +51,10 @@ impl<PROOF_LEN, RECEIPT_RLP_LENGTH> TrieProof<3, PROOF_LEN, RECEIPT_RLP_LENGTH>
     /// * `key_nibbles` - Array containing the nibbles of the key
     /// * `path` - RLP-encoded proof path
     /// * `depth` - Depth of proof path
-    fn verify_receipt_leaf_node(self, extracted_hash: [u8; HASH_LENGTH], key_len: u64, key_ptr: u64, key_nibbles: [u8; RLP_IDX_KEY_NIBBLE_LENGTH]) 
+    fn verify_receipt_leaf_node(self, extracted_hash: [u8; HASH_LENGTH], key_len: u64, key_ptr: u64, key_nibbles: [u8; RLP_IDX_KEY_NIBBLE_LENGTH])
     {
         let value = self.value;
-        
+
         let mut leaf_node = [0; MAX_TRIE_NODE_LENGTH];
         // Treat final node as the preceding nodes...
         memcpy(&mut leaf_node, self.proof, (self.depth - 1) * MAX_TRIE_NODE_LENGTH);
@@ -62,7 +62,7 @@ impl<PROOF_LEN, RECEIPT_RLP_LENGTH> TrieProof<3, PROOF_LEN, RECEIPT_RLP_LENGTH>
         assert(verify_node_hash(leaf_node, extracted_hash), "Receipt root: leaf node hash does not match the hash extracted from the preceding node");
 
         let rlp_list: rlp::RLP_List<2> = rlp::decode1(leaf_node); // Terminal node must be a 2-node
-        
+
         // ...except extract a value rather than a key.
         let (node_type, mut extracted_value, extracted_value_length, terminal_key_ptr): (u64, [u8; RECEIPT_RLP_LENGTH], u64, u64) = resolve2(leaf_node, rlp_list, key_nibbles, key_ptr);
         assert(node_type == LEAF, "Receipt root: terminal node is not a leaf node");

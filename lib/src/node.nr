@@ -22,7 +22,7 @@ pub(crate) fn verify_internal_node<PROOF_LEN, KEY_NIBBLE_LEN>(extracted_hash: &m
     memcpy(&mut node, proof, cur_depth_or_0 * MAX_TRIE_NODE_LENGTH);
 
     assert(!in_range | verify_node_hash(node, *extracted_hash), "Internal node hash does not match the hash extracted from the preceding node");
-    
+
     // Extract hash and advance key pointer if within range
     let (node_type, resolved_key, key_pointer): (u64, [u8; HASH_LENGTH], u64) = resolve_nibble32(key_nibbles, if in_range { *key_ptr } else { 0 }, node); // Resolve next nibble(s)
     assert(!in_range | (node_type != LEAF));
@@ -35,8 +35,7 @@ pub(crate) fn verify_internal_node<PROOF_LEN, KEY_NIBBLE_LEN>(extracted_hash: &m
 /// # Arguments
 /// * `node` - RLP-encoded trie node
 /// * `hash` - 32-byte hash value
-pub(crate) fn verify_node_hash<N>(node: [u8; N], hash: [u8; HASH_LENGTH])
-                           -> bool
+pub(crate) fn verify_node_hash<N>(node: [u8; N], hash: [u8; HASH_LENGTH]) -> bool
 {
     // Extract actual length of node
     let node_length = { let rlp_header = rlp::decode_len(node); rlp_header.offset + rlp_header.length }; // Determine length of node
@@ -44,11 +43,9 @@ pub(crate) fn verify_node_hash<N>(node: [u8; N], hash: [u8; HASH_LENGTH])
     // Extra safety
     let in_range = ((node_length as u32) > (node.len() as u32)) as u64;
     let safe_length = in_range * node.len() as u64 + (1 - in_range) * node_length;
-    
-    // Compute Keccak256 hash of node
+
     let node_hash = keccak256(node, safe_length as u32);
 
-    // Compare hashes
     node_hash == hash
 }
 
@@ -57,12 +54,12 @@ pub(crate) fn verify_node_hash<N>(node: [u8; N], hash: [u8; HASH_LENGTH])
 ///
 /// # Arguments
 /// * `key` - Array of bytes representing a key
-pub(crate) fn key_as_nibbles<KEY_LEN, NIB_LEN>(key: [u8; KEY_LEN]) -> [u8; NIB_LEN]
+pub fn key_as_nibbles<KEY_LEN, NIB_LEN>(key: [u8; KEY_LEN]) -> [u8; NIB_LEN]
 {
     assert(NIB_LEN == 2 * KEY_LEN);
-    
+
     let mut nibkey = [0; NIB_LEN];
-    
+
     for i in 0..KEY_LEN
     {
         let nibs = byte_to_nibbles(key[i]);
@@ -70,7 +67,7 @@ pub(crate) fn key_as_nibbles<KEY_LEN, NIB_LEN>(key: [u8; KEY_LEN]) -> [u8; NIB_L
         nibkey[2 * i] = nibs.0;
         nibkey[2 * i + 1] = nibs.1;
     }
-    
+
     nibkey
 }
 
@@ -84,29 +81,30 @@ pub(crate) fn compact_decode<MAX_ENC_LEN, NIB_LEN>(input: [u8; MAX_ENC_LEN], len
 {
 
     assert((2 as u32)*(MAX_ENC_LEN as u32) <= ((NIB_LEN + 2) as u32)); // MAX_ENC_LEN should be NIB_LEN/2 or NIB_LEN/2 + 1. TODO
-    
+
     let mut nibble = [0 as u8; NIB_LEN];
     let mut out_length = 0;
 
     let mut prev_nibbles = byte_to_nibbles(input[0]);
-    let mut cur_nibbles = (0,0);
-    
+    let mut cur_nibbles = (0, 0);
+
     let first_nibble = prev_nibbles.0;
-    let parity = first_nibble as u1;
+    let parity = first_nibble as u1 as u8;
+    let not_parity = (1 - (parity as u8));
 
     // Consistency checks
     // The first nibble should always be less than 4.
     assert(first_nibble < 4);
     // Parity consistency: If we are dealing with an even number of nibbles, then the second nibble should be 0.
-    assert(((1-parity) as u8)*prev_nibbles.1 == 0);
+    assert(not_parity * prev_nibbles.1 == 0);
 
     for i in 0..(MAX_ENC_LEN - 1)
     {
         let x = input[i + 1];
         cur_nibbles = byte_to_nibbles(x); // x decomposed into two nibbles
 
-        nibble[2 * i] = (parity as u8)*prev_nibbles.1 + (1 - (parity as u8))*cur_nibbles.0;
-        nibble[2 * i + 1] = (parity as u8)*cur_nibbles.0 + (1 - (parity as u8))*cur_nibbles.1;
+        nibble[2 * i] = parity * prev_nibbles.1 + not_parity * cur_nibbles.0;
+        nibble[2 * i + 1] = parity * cur_nibbles.0 + not_parity * cur_nibbles.1;
 
         prev_nibbles = cur_nibbles;
     }
@@ -115,8 +113,7 @@ pub(crate) fn compact_decode<MAX_ENC_LEN, NIB_LEN>(input: [u8; MAX_ENC_LEN], len
 
 
     assert((out_length as u32) <= (NIB_LEN as u32)); // Sanity check
-    let out = (nibble, out_length);
-    out
+    (nibble, out_length)
 }
 
 /// Non-terminal nibble resolver (assuming 32-byte fixed key length).
@@ -126,31 +123,32 @@ pub(crate) fn compact_decode<MAX_ENC_LEN, NIB_LEN>(input: [u8; MAX_ENC_LEN], len
 /// * `key` - Array containing the nibbles to be resolved
 /// * `key_ptr` - Pointer to the nibbles in `key` to be resolved
 /// * `node` - RLP-encoded byte array of branch or extension node
-pub(crate) fn resolve_nibble32<N, KEY_NIBBLE_LEN>(
+pub fn resolve_nibble32<N, KEY_NIBBLE_LEN>(
     key: [u8; KEY_NIBBLE_LEN],
     mut key_ptr: u64,
-    node: [u8; N]) ->
-    (u64,
-     [u8; HASH_LENGTH], // Extracted hash
-     u64) // New key pointer
-{
+    node: [u8; N]
+) -> (
+    u64,
+    [u8; HASH_LENGTH], // Extracted hash
+    u64 // New key pointer
+) {
     let rlp_list: rlp::RLP_List<MAX_NUM_FIELDS> = rlp::decode1_small_lis(node); // Assumes no intermediate nodes have slots with >= 56 bytes, which is the case for state and storage proofs.
     let num_fields = rlp_list.num_fields;
 
     let mut node_type = BRANCH;
     let mut resolved_key = [0; HASH_LENGTH];
     let mut resolved_key_length = 0;
-    
+
     if num_fields == 2 // If we are dealing with an extension node
     {
-        // Resolve 2-node        
+        // Resolve 2-node
         let node_resolution: (u64, [u8; HASH_LENGTH], u64, u64) = resolve2(node, rlp_list, key, key_ptr);
-        
+
         // Deconstruct
         node_type = node_resolution.0;
         key_ptr = node_resolution.3;
         resolved_key = node_resolution.1;
-        resolved_key_length = node_resolution.2;        
+        resolved_key_length = node_resolution.2;
     }
     else
     {
@@ -166,7 +164,7 @@ pub(crate) fn resolve_nibble32<N, KEY_NIBBLE_LEN>(
     }
 
     assert((node_type == LEAF) | (resolved_key_length == HASH_LENGTH));
-    
+
     (node_type, resolved_key, key_ptr)
 }
 
@@ -183,15 +181,15 @@ pub(crate) fn resolve17<N, NUM_FIELDS, KEY_NIBBLE_LEN>(
     node: [u8; N],
     rlp_list: rlp::RLP_List<NUM_FIELDS>,
     key: [u8; KEY_NIBBLE_LEN],
-    mut key_ptr: u64)
-    -> (
+    mut key_ptr: u64
+) -> (
     [u8; HASH_LENGTH], // Extracted hash
     u64, // Extracted key length
-    u64) // New key pointer
-{
+    u64 // New key pointer
+) {
     // We should be dealing with a node containing 17 elements
     assert(rlp_list.num_fields == 17);
-    
+
     // The first 16 slots should be of length 32 or 0.
     for i in 0..16
     {
@@ -200,28 +198,25 @@ pub(crate) fn resolve17<N, NUM_FIELDS, KEY_NIBBLE_LEN>(
 
     // And the last slot should be empty
     assert(rlp_list.length[16] == 0);
-    
+
     let cur_nibble = key[key_ptr];
     let resolved_key_length = rlp_list.length[cur_nibble as u64];
 
     assert(resolved_key_length == HASH_LENGTH);
     assert((key_ptr as u32) < (HASH_NIBBLE_LENGTH as u32)); // Fixed-length key => Node cannot be terminal.
-    
+
     key_ptr += 1;
 
     let nibble_offset = rlp_list.offset[cur_nibble as u64];
 
     let mut resolved_key = [0; HASH_LENGTH];
-    
+
     for j in 0..HASH_LENGTH
     {
         resolved_key[j] = node[nibble_offset + j];
     }
 
-
-    let out = (resolved_key, resolved_key_length, key_ptr);
-
-    out
+    (resolved_key, resolved_key_length, key_ptr)
 }
 
 // Resolve a 2-node, i.e. a LEAF or EXTENSION.
@@ -237,20 +232,20 @@ pub(crate) fn resolve2<N, NUM_FIELDS, MAX_VALUE_LEN, KEY_NIBBLE_LEN>(
     node: [u8; N],
     rlp_list: rlp::RLP_List<NUM_FIELDS>,
     key: [u8; KEY_NIBBLE_LEN],
-    mut key_ptr: u64)
-    -> (
+    mut key_ptr: u64
+) -> (
     u64,
     [u8; MAX_VALUE_LEN], // Extracted value
     u64, // Value length
-    u64) // New key offset
-{
+    u64 // New key offset
+) {
     // We should be dealing with a node containing two elements
     assert(rlp_list.num_fields == 2);
-    
+
     let mut value = [0; MAX_VALUE_LEN];
-    
+
     let first_slot: [u8; 1 + HASH_LENGTH] = rlp::copy_subarray(node, rlp_list.offset[0]); // TODO: Replace consts with numeric generics when it is possible to use them in array length expressions
-    
+
     let (nib, niblen): ([u8; HASH_NIBBLE_LENGTH], u64) = compact_decode(first_slot, rlp_list.length[0]);
 
     // Length checks.
@@ -271,7 +266,7 @@ pub(crate) fn resolve2<N, NUM_FIELDS, MAX_VALUE_LEN, KEY_NIBBLE_LEN>(
     let value_length = rlp_list.length[1];
     // This should not exceed MAX_VALUE_LEN
     assert((value_length as u32) <= (MAX_VALUE_LEN as u32));
-    
+
     // Increment offset
     key_ptr += niblen;
 

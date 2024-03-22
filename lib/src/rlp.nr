@@ -17,7 +17,7 @@ struct RLP_Header
     /// Length of RLP-encoded object starting from the above offset
     length: u64,
     /// Data type of RLP-encoded object, i.e. STRING or LIST
-    data_type: u64 
+    data_type: u64
 }
 
 impl RLP_Header

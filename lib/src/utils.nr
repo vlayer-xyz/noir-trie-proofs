@@ -3,7 +3,7 @@
 /// # Arguments
 /// * `dest` - Destination array
 /// * `src` - Source array
-/// * `offset` - Offset in source array 
+/// * `offset` - Offset in source array
 pub(crate) fn memcpy<N, M>(dest: &mut [u8; N], src: [u8; M], offset: u64)
 {
     for i in 0..N

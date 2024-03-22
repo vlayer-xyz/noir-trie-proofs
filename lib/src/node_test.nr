@@ -21,7 +21,6 @@ fn compact_decode_test()
     let (nibble2, len2): ([u8; HASH_NIBBLE_LENGTH], u64) = compact_decode([0x3f, 0x1c, 0xb8, 0x99, 0xab, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 3);
     assert(len2 == 5);
     assert([nibble2[0], nibble2[1], nibble2[2], nibble2[3], nibble2[4]] == [15,1,12,11,8]);
-    
 }
 
 #[test]
