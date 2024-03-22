@@ -9,17 +9,17 @@ use dep::std::hash::keccak256;
 /// * `extracted_hash` - Hash extracted from the preceding node
 /// * `key_ptr` - Pointer to current nibble in the key
 /// * `key_nibbles` - Array containing the nibbles of the key
-/// * `path` - RLP-encoded proof path
-/// * `depth` - Depth of proof path
+/// * `proof` - RLP-encoded proof
+/// * `depth` - Depth of the proof
 /// * `cur_depth` - Current depth in the proof path
-pub(crate) fn verify_internal_node<PROOF_LEN, KEY_NIBBLE_LEN>(extracted_hash: &mut [u8; HASH_LENGTH], key_ptr: &mut u64, key_nibbles: [u8; KEY_NIBBLE_LEN], path: [u8; PROOF_LEN], depth: u64, cur_depth: u64)
+pub(crate) fn verify_internal_node<PROOF_LEN, KEY_NIBBLE_LEN>(extracted_hash: &mut [u8; HASH_LENGTH], key_ptr: &mut u64, key_nibbles: [u8; KEY_NIBBLE_LEN], proof: [u8; PROOF_LEN], depth: u64, cur_depth: u64)
 {
     let in_range = (cur_depth as u8) < (depth - 1) as u8; // Range indicator
 
     let cur_depth_or_0 = if (in_range) {cur_depth} else {0}; // Restrict index to range {0, ..., depth - 2}
     let mut node = [0; MAX_TRIE_NODE_LENGTH];
     // Populate node array
-    memcpy(&mut node, path, cur_depth_or_0 * MAX_TRIE_NODE_LENGTH);
+    memcpy(&mut node, proof, cur_depth_or_0 * MAX_TRIE_NODE_LENGTH);
 
     assert(!in_range | verify_node_hash(node, *extracted_hash), "Internal node hash does not match the hash extracted from the preceding node");
     

@@ -28,20 +28,14 @@ impl<PROOF_LEN, MAX_VALUE_LEN> TrieProof<32, PROOF_LEN, MAX_VALUE_LEN>
         assert((PROOF_LEN as u32) % (MAX_TRIE_NODE_LENGTH as u32) == 0); // Check that N is a multiple of MAX_TRIE_NODE_LENGTH
 
         let key = keccak256(self.key, 32); // The path is traced out by the hashed key
-
         let key_nibbles: [u8; HASH_NIBBLE_LENGTH] = key_as_nibbles(key);
-        
         let mut key_ptr: u64 = 0;
-
-        let path = self.proof; // Proof path
-
-        let depth = self.depth; // Depth of proof path
 
         let mut extracted_hash = storage_root;
 
-        for i in 0..(path.len() as u64 / MAX_TRIE_NODE_LENGTH - 1)
+        for i in 0..(self.proof.len() as u64 / MAX_TRIE_NODE_LENGTH - 1)
         {
-            verify_internal_node(&mut extracted_hash, &mut key_ptr, key_nibbles, path, depth, i);
+            verify_internal_node(&mut extracted_hash, &mut key_ptr, key_nibbles, self.proof, self.depth, i);
         }
 
         self.verify_storage_leaf_node(extracted_hash, key.len(), key_ptr, key_nibbles);
@@ -60,7 +54,7 @@ impl<PROOF_LEN, MAX_VALUE_LEN> TrieProof<32, PROOF_LEN, MAX_VALUE_LEN>
     /// * `key_nibbles` - Array containing the nibbles of the key
     /// * `path` - RLP-encoded proof path
     /// * `depth` - Depth of proof path
-    pub fn verify_storage_leaf_node(self, hash: [u8; HASH_LENGTH], key_len: Field, key_ptr: u64, key_nibbles: [u8; HASH_NIBBLE_LENGTH]) 
+    pub fn verify_storage_leaf_node(self, hash: [u8; HASH_LENGTH], key_len: u64, key_ptr: u64, key_nibbles: [u8; HASH_NIBBLE_LENGTH])
     {
         let (value, mut value_length) = byte_value(self.value); // Value to verify together with its byte length
         

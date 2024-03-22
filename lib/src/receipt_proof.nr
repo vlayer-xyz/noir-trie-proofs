@@ -25,20 +25,14 @@ impl<PROOF_LEN, RECEIPT_RLP_LENGTH> TrieProof<3, PROOF_LEN, RECEIPT_RLP_LENGTH>
         assert((PROOF_LEN as u32) % (MAX_TRIE_NODE_LENGTH as u32) == 0, "PROOF_LEN must be a multiple of MAX_TRIE_NODE_LENGTH");
 
         let (key, key_len) = byte_value(self.key);
-        
         let key_nibbles: [u8; RLP_IDX_KEY_NIBBLE_LENGTH] = key_as_nibbles(key);
-        
         let mut key_ptr: u64 = 0;
-
-        let path = self.proof; // Proof path
-
-        let depth = self.depth; // Depth of proof path
 
         let mut extracted_hash = receipt_root;
 
-        for i in 0..(path.len() as u64 / MAX_TRIE_NODE_LENGTH - 1)
+        for i in 0..(self.proof.len() as u64 / MAX_TRIE_NODE_LENGTH - 1)
         {
-            verify_internal_node(&mut extracted_hash, &mut key_ptr, key_nibbles, path, depth, i);
+            verify_internal_node(&mut extracted_hash, &mut key_ptr, key_nibbles, self.proof, self.depth, i);
         }
 
         self.verify_receipt_leaf_node(extracted_hash, key_len, key_ptr, key_nibbles);
