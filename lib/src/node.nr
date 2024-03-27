@@ -1,7 +1,24 @@
-use crate::const::{HASH_LENGTH, HASH_NIBBLE_LENGTH, MAX_NUM_FIELDS, BRANCH, LEAF, MAX_TRIE_NODE_LENGTH};
+use crate::const::{HASH_LENGTH, HASH_NIBBLE_LENGTH, MAX_NUM_FIELDS, BRANCH, LEAF};
 use crate::utils::{byte_to_nibbles, memcpy};
 use crate::rlp;
 use dep::std::hash::keccak256;
+
+/// Returns the node at the specified depth in the proof path.
+///
+/// # Arguments
+/// * `path` - RLP-encoded proof path
+/// * `depth` - Depth of proof path
+/// * `cur_depth` - Current depth in the proof path
+pub(crate) fn get_node<PROOF_LEN, MAX_TRIE_NODE_LENGTH>(path: [u8; PROOF_LEN], depth: u64, cur_depth: u64) -> [u8; MAX_TRIE_NODE_LENGTH] {
+    let in_range = (cur_depth as u8) < (depth - 1) as u8; // Range indicator
+
+    let cur_depth_or_0 = if (in_range) {cur_depth} else {0}; // Restrict index to range {0, ..., depth - 2}
+    let mut node = [0; MAX_TRIE_NODE_LENGTH];
+    // Populate node array
+    memcpy(&mut node, path, cur_depth_or_0 * MAX_TRIE_NODE_LENGTH);
+
+    node
+}
 
 /// Verifies that an internal node hashes to extracted hash. Extracts the next hash and advances the key pointer.
 ///
@@ -12,14 +29,9 @@ use dep::std::hash::keccak256;
 /// * `path` - RLP-encoded proof path
 /// * `depth` - Depth of proof path
 /// * `cur_depth` - Current depth in the proof path
-pub(crate) fn verify_internal_node<PROOF_LEN, KEY_NIBBLE_LEN>(extracted_hash: &mut [u8; HASH_LENGTH], key_ptr: &mut u64, key_nibbles: [u8; KEY_NIBBLE_LEN], path: [u8; PROOF_LEN], depth: u64, cur_depth: u64)
+pub(crate) fn verify_internal_node<MAX_TRIE_NODE_LENGTH, PROOF_LEN, KEY_NIBBLE_LEN>(node: [u8; MAX_TRIE_NODE_LENGTH], extracted_hash: &mut [u8; HASH_LENGTH], key_ptr: &mut u64, key_nibbles: [u8; KEY_NIBBLE_LEN], path: [u8; PROOF_LEN], depth: u64, cur_depth: u64)
 {
     let in_range = (cur_depth as u8) < (depth - 1) as u8; // Range indicator
-
-    let cur_depth_or_0 = if (in_range) {cur_depth} else {0}; // Restrict index to range {0, ..., depth - 2}
-    let mut node = [0; MAX_TRIE_NODE_LENGTH];
-    // Populate node array
-    memcpy(&mut node, path, cur_depth_or_0*MAX_TRIE_NODE_LENGTH);
 
     assert(!in_range | verify_node_hash(node, *extracted_hash), "Internal node hash does not match the hash extracted from the preceding node");
     
