@@ -14,7 +14,6 @@ global RLP_IDX_KEY_NIBBLE_LENGTH: u64 = 6; // TODO: make sure it really is 6
 global MAX_TRIE_NODE_LENGTH: u64 = 532; // = MAX_RLP_LIST_HEADER_LENGTH (= 1 + MAX_LENGTH_BYTES)
 //   + 16*MAX_RLP_ELEMENT_LENGTH (= 16*(1 + HASH_LENGTH))
 // + LENGTH_OF_NULL_ELEMENT (= 1)
-global MAX_TX_TRIE_NODE_LENGTH: u64 = 1048;
 
 /// Maximum size of the value in a storage slot
 global MAX_STORAGE_VALUE_LENGTH: u64 = 32;
