@@ -32,6 +32,6 @@ fn test_cancun_receipt_proof()
 fn test_cancun_receipt_proof_fail()
 {
     let mut trie_proof_with_wrong_value = trie_proof;
-    trie_proof_with_wrong_value.value[500] += 1;
+    trie_proof_with_wrong_value.value[trie_proof.value.len() - 1] += 1;
     assert(trie_proof_with_wrong_value.verify_receipt_root(receipt_root));
 }
