@@ -1,10 +1,11 @@
 /// Node type
-global BRANCH: u64 = 2; global EXTENSION: u64 = 0; global LEAF: u64 = 1;
+global BRANCH: u64 = 2;
+global EXTENSION: u64 = 0;
+global LEAF: u64 = 1;
 
 /// Length of keccak256 hash.
 global HASH_LENGTH: u64 = 32;
 global HASH_NIBBLE_LENGTH: u64 = 64; // = 2*HASH_LENGTH
-
 
 global RLP_IDX_KEY_LENGTH: u64 = 3;
 global RLP_IDX_KEY_NIBBLE_LENGTH: u64 = 6; // TODO: make sure it really is 6

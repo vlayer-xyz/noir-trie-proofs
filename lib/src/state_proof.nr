@@ -2,7 +2,7 @@ use crate::{
     trie_proof::TrieProof,
     const::{HASH_LENGTH, HASH_NIBBLE_LENGTH, MAX_TRIE_NODE_LENGTH, MAX_ACCOUNT_STATE_LENGTH, LEAF},
     utils::{memcpy, byte_value, assert_subarray},
-    node::{key_as_nibbles, verify_internal_node, verify_node_hash, resolve2}
+    node::{key_as_nibbles, verify_internal_node, verify_node_hash, resolve2, get_internal_node}
 };
 use dep::std::hash::keccak256;
 use crate::rlp;
@@ -38,7 +38,8 @@ impl<PROOF_LEN, MAX_VALUE_LEN> TrieProof<20, PROOF_LEN, MAX_VALUE_LEN>
 
         for i in 0..(path.len() as u64 / MAX_TRIE_NODE_LENGTH - 1)
         {
-            verify_internal_node(&mut extracted_hash, &mut key_ptr, key_nibbles, path, depth, i);
+            let node: [u8; MAX_TRIE_NODE_LENGTH] = get_internal_node(path, depth, i);
+            verify_internal_node(node, &mut extracted_hash, &mut key_ptr, key_nibbles, path, depth, i);
         }
 
         self.verify_state_leaf_node(extracted_hash, key.len(), key_ptr, key_nibbles);

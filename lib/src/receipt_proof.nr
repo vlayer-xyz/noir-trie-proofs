@@ -2,7 +2,7 @@ use crate::{
     trie_proof::TrieProof,
     const::{MAX_TRIE_NODE_LENGTH, LEAF, HASH_LENGTH, HASH_NIBBLE_LENGTH, RLP_IDX_KEY_NIBBLE_LENGTH},
     utils::{memcpy, byte_value, assert_subarray},
-    node::{key_as_nibbles, verify_internal_node, verify_node_hash, resolve2}
+    node::{key_as_nibbles, verify_internal_node, verify_node_hash, resolve2, get_internal_node}
 };
 use crate::rlp;
 
@@ -37,7 +37,8 @@ impl<PROOF_LEN, RECEIPT_RLP_LENGTH> TrieProof<3, PROOF_LEN, RECEIPT_RLP_LENGTH>
 
         for i in 0..(path.len() as u64 / MAX_TRIE_NODE_LENGTH - 1)
         {
-            verify_internal_node(&mut extracted_hash, &mut key_ptr, key_nibbles, path, depth, i);
+            let node: [u8; MAX_TRIE_NODE_LENGTH] = get_internal_node(path, depth, i);
+            verify_internal_node(node, &mut extracted_hash, &mut key_ptr, key_nibbles, path, depth, i);
         }
 
         self.verify_receipt_leaf_node(extracted_hash, key_len, key_ptr, key_nibbles);
@@ -73,9 +74,9 @@ impl<PROOF_LEN, RECEIPT_RLP_LENGTH> TrieProof<3, PROOF_LEN, RECEIPT_RLP_LENGTH>
         assert(node_type == LEAF, "Receipt root: terminal node is not a leaf node");
 
         assert((extracted_value_length as u32) <= (RECEIPT_RLP_LENGTH as u32), "Receipt root: extracted value must fit in a byte array of length RECEIPT_RLP_LENGTH");
-        assert(terminal_key_ptr == 2*key_len as u64, "Receipt root: not all of the key has been exhausted");
+        assert(terminal_key_ptr == 2 * key_len as u64, "Receipt root: not all of the key has been exhausted");
 
-        assert(extracted_value_length == value_length, "Receipt root: extracted value length does not match value_length");
+        assert(extracted_value_length == value_length, "Receipt root: extracted value length does not match value length");
         assert_subarray(value, extracted_value, RECEIPT_RLP_LENGTH, 0);
     }
 }
