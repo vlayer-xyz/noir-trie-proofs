@@ -2,7 +2,7 @@ use crate::{
     trie_proof::TrieProof,
     const::{LEAF, HASH_LENGTH, HASH_NIBBLE_LENGTH, RLP_IDX_KEY_NIBBLE_LENGTH, MAX_TRIE_NODE_LENGTH},
     utils::{memcpy, byte_value, assert_subarray},
-    node::{key_as_nibbles, verify_internal_node, verify_node_hash, resolve2, get_node}
+    node::{key_as_nibbles, verify_internal_node, verify_node_hash, resolve2, get_internal_node}
 };
 use crate::rlp;
 
@@ -36,7 +36,7 @@ impl<PROOF_LEN, TX_RLP_LENGTH> TrieProof<3, PROOF_LEN, TX_RLP_LENGTH> {
         let mut extracted_hash = transaction_root;
 
         for i in 0..(path.len() as u64 / MAX_TRIE_NODE_LENGTH - 1) {
-            let node: [u8; MAX_TRIE_NODE_LENGTH] = get_node(path, depth, i);
+            let node: [u8; MAX_TRIE_NODE_LENGTH] = get_internal_node(path, depth, i);
             verify_internal_node(node, &mut extracted_hash, &mut key_ptr, key_nibbles, path, depth, i);
         }
 

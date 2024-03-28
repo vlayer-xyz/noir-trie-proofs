@@ -9,7 +9,7 @@ use dep::std::hash::keccak256;
 /// * `path` - RLP-encoded proof path
 /// * `depth` - Depth of proof path
 /// * `cur_depth` - Current depth in the proof path
-pub(crate) fn get_node<PROOF_LEN, MAX_TRIE_NODE_LENGTH>(path: [u8; PROOF_LEN], depth: u64, cur_depth: u64) -> [u8; MAX_TRIE_NODE_LENGTH] {
+pub(crate) fn get_internal_node<PROOF_LEN, MAX_TRIE_NODE_LENGTH>(path: [u8; PROOF_LEN], depth: u64, cur_depth: u64) -> [u8; MAX_TRIE_NODE_LENGTH] {
     let in_range = (cur_depth as u8) < (depth - 1) as u8; // Range indicator
 
     let cur_depth_or_0 = if (in_range) {cur_depth} else {0}; // Restrict index to range {0, ..., depth - 2}

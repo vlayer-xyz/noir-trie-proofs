@@ -1,5 +1,5 @@
 use crate::const::{HASH_NIBBLE_LENGTH, MAX_TRIE_NODE_LENGTH};
-use crate::node::{key_as_nibbles, verify_internal_node, compact_decode, get_node};
+use crate::node::{key_as_nibbles, verify_internal_node, compact_decode, get_internal_node};
 
 #[test]
 fn nibble_check()
@@ -420,7 +420,7 @@ fn test_verify_internal_node()
                  0x00, ];
     let depth = 8;
     let cur_depth = 1;
-    let node: [u8; MAX_TRIE_NODE_LENGTH] = get_node(path, depth, cur_depth);
+    let node: [u8; MAX_TRIE_NODE_LENGTH] = get_internal_node(path, depth, cur_depth);
     verify_internal_node(node, &mut extracted_hash, &mut key_ptr, key_nibbles, path, depth, cur_depth);
     assert(extracted_hash == [0xa2, 0xfc, 0x4, 0xa2, 0x1, 0x99, 0xd4, 0x8b, 0xc5, 0xe0, 0x73, 0x27, 0x19, 0x2e, 0xfd, 0x12, 0x73, 0x2, 0xe8, 0x8c, 0x35, 0x48, 0x2c, 0xfa, 0xde, 0xf6, 0xb8, 0x72, 0xcb, 0x25, 0xd5, 0x3f]);
 }
