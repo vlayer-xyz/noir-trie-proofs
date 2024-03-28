@@ -74,9 +74,9 @@ impl<PROOF_LEN, RECEIPT_RLP_LENGTH> TrieProof<3, PROOF_LEN, RECEIPT_RLP_LENGTH>
         assert(node_type == LEAF, "Receipt root: terminal node is not a leaf node");
 
         assert((extracted_value_length as u32) <= (RECEIPT_RLP_LENGTH as u32), "Receipt root: extracted value must fit in a byte array of length RECEIPT_RLP_LENGTH");
-        assert(terminal_key_ptr == 2*key_len as u64, "Receipt root: not all of the key has been exhausted");
+        assert(terminal_key_ptr == 2 * key_len as u64, "Receipt root: not all of the key has been exhausted");
 
-        assert(extracted_value_length == value_length, "Receipt root: extracted value length does not match value_length");
+        assert(extracted_value_length == value_length, "Receipt root: extracted value length does not match value length");
         assert_subarray(value, extracted_value, RECEIPT_RLP_LENGTH, 0);
     }
 }

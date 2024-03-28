@@ -63,7 +63,7 @@ impl<PROOF_LEN, TX_RLP_LENGTH> TrieProof<3, PROOF_LEN, TX_RLP_LENGTH> {
         key_ptr: u64,
         key_nibbles: [u8; RLP_IDX_KEY_NIBBLE_LENGTH]
     ) {
-        let value = self.value;
+        let (value, value_length) = byte_value(self.value);
 
         let mut leaf_node = [0; MAX_TRIE_NODE_LENGTH];
         // Treat final node as the preceding nodes...
@@ -80,7 +80,7 @@ impl<PROOF_LEN, TX_RLP_LENGTH> TrieProof<3, PROOF_LEN, TX_RLP_LENGTH> {
         assert((extracted_value_length as u32) <= (TX_RLP_LENGTH as u32), "Transaction root: extracted value must fit in a byte array of length TX_RLP_LENGTH");
         assert(terminal_key_ptr == 2 * key_len as u64, "Transaction root: not all of the key has been exhausted");
 
-        assert(extracted_value_length == TX_RLP_LENGTH, "Transaction root: extracted value length does not match TX_RLP_LENGTH");
+        assert(extracted_value_length == value_length, "Transaction root: extracted value length does not match value length");
         assert_subarray(value, extracted_value, TX_RLP_LENGTH, 0);
     }
 }
