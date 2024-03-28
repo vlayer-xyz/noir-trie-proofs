@@ -13,3 +13,5 @@ mod storage_proof;
 mod storage_proof_test;
 mod receipt_proof;
 mod receipt_proof_test;
+mod transaction_proof;
+mod transaction_proof_test;
